@@ -1,5 +1,4 @@
 import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
-import './App.css'
 import User from "./components/User";
 import Admin from "./components/Admin";
 

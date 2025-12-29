@@ -14,13 +14,17 @@ const Admin = () => {
     }
 
     return (
-        <>
-            <input ref={teamOneName} placeholder="Nazwa drużyny 1"></input>
-            <button onClick={() => { UpdateTeamOneName() }}>Zapisz</button>
+        <div className="w-screen flex justify-between p-5">
+            <div className="flex gap-2 flex-nowrap">
+                <input ref={teamOneName} placeholder="Nazwa drużyny 1" className="outline-none border-solid border-b border-b-yellow-300"></input>
+                <button onClick={() => { UpdateTeamOneName() }} className="bg-yellow-300 text-black px-2 rounded-lg">Zapisz</button>
+            </div>
 
-            <input ref={teamTwoName} placeholder="Nazwa drużyny 2"></input>
-            <button onClick={() => { UpdateTeamTwoName() }}>Zapisz</button>
-        </>
+            <div>
+                <input ref={teamTwoName} placeholder="Nazwa drużyny 2" className="outline-none border-solid border-b border-b-yellow-300"></input>
+                <button onClick={() => { UpdateTeamTwoName() }} className="bg-yellow-300 text-black px-2 rounded-lg">Zapisz</button>
+            </div>
+        </div>
     )
 }
 
