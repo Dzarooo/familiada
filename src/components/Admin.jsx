@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 const Admin = () => {
 
@@ -14,6 +15,8 @@ const Admin = () => {
     };
 
     const app = initializeApp(firebaseConfig);
+
+    const auth = getAuth(app);
 
     const db = getFirestore(app);
 
@@ -53,6 +56,11 @@ const Admin = () => {
     }
 
     useEffect(() => {
+
+        signInAnonymously(auth).catch(err => {
+            console.error("Anon auth failed:", err);
+        });
+
         const fetchAllTeams = async () => {
             try {
 
@@ -80,7 +88,16 @@ const Admin = () => {
             }
         };
 
-        fetchAllTeams();
+        const unsubAuth = onAuthStateChanged(auth, (user) => {
+            if (!user) return;
+
+            console.log("Auth ready");
+
+            fetchAllTeams();
+        });
+
+        return () => unsubAuth();
+
     }, [db]);
 
     return (
