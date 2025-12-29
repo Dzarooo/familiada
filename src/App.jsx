@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import User from "./components/User";
 import Admin from "./components/Admin";
 
