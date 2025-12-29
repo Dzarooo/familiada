@@ -1,20 +1,30 @@
-import { useState } from 'react'
+import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
 import './App.css'
+import User from "./components/User";
+import Admin from "./components/Admin";
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
-    <>
-      <div>
-      </div>
-      <h1>There will be familiada someday</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-      </div>
-    </>
+    <HashRouter>
+      <main>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <User />
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <Admin />
+            }
+          />
+        </Routes>
+      </main>
+    </HashRouter>
+
   )
 }
 
