@@ -30,6 +30,7 @@ const Admin = () => {
 
     const [questions, setQuestions] = useState(null)
 
+    // Update given team name in database.
     const updateTeamName = async (team) => {
         const ref = teamRefs[team];
 
@@ -57,12 +58,49 @@ const Admin = () => {
         }
     }
 
+    // Show answers accordion component.
     const toggleAnswers = (id) => {
         setQuestions(prev => 
             prev.map(question => 
                 question.id === id ? { ...question, answersShown: !question.answersShown} : { ...question, answersShown: false }
             )
-        )
+        );
+    }
+
+    // Toggle answer isShown boolean in database.
+    const toggleAnswer = async (questionId, answerId) => {
+        console.log(questionId, answerId);
+        try {
+            const ref = doc(db, "questions", questionId);
+            const docSnap = await getDoc(ref);
+            const current = docSnap.data().answers[answerId].isShown;
+
+            await updateDoc(
+                ref,
+                { [`answers.${answerId}.isShown`]: !current }
+            );
+
+
+            setQuestions(prev => 
+                prev.map(question => {
+                    if(question.id != questionId) return question;
+
+                    const newAnswers = Object.fromEntries(
+                        Object.entries(question.answers).map(([id, answer]) => [
+                            id,
+                            id === answerId ? { ...answer, isShown: !current } : answer
+                        ])
+                    )
+                    
+                    return { ...question, answers: newAnswers };
+                })
+            )
+
+            console.log("toggled answer for questionId " + questionId + "and answerId" + answerId);
+        }
+        catch(err) {
+            console.error(err.message);
+        }
     }
 
     useEffect(() => {
@@ -108,10 +146,7 @@ const Admin = () => {
                     ...doc.data(),
                 }));
 
-                // console.log(data);
-                // data[0].answers.map((answer) => {
-                //     console.log(answer.answer)
-                // })
+                //console.log(data);
                 setQuestions(data);
                 console.log("fetched questions.");
             }
@@ -157,25 +192,25 @@ const Admin = () => {
                 {/* Already loaded */}
                 {questions != null &&
                     <div className="w-screen flex items-center flex-col gap-4">
-                        <h1 className="text-center">Questions</h1>
+                        <h1 className="text-center">Pytania</h1>
 
                         <div className="min-w-fit w-[70vw]">
                             {questions.map((question, index) => {
                                 return (
                                     <div key={question.id} className="border-solid border-t border-yellow-300 last:border-b flex flex-col gap-2">
                                         {/* question */}
-                                        <div className="flex flex-nowrap justify-between p-2 cursor-pointer" onClick={() => {toggleAnswers(question.id)}}>
+                                        <div onClick={() => {toggleAnswers(question.id)}} className="flex flex-nowrap justify-between p-2 cursor-pointer">
                                             <p>{index + 1}. {question.question}</p>
-                                            <button className="border-solid border border-yellow-300 px-2 cursor-pointer bg-yellow-300 text-black">{question.isShown ? "Ukryj" : "Pokaż"}</button>
+                                            <button className={`border-solid border border-yellow-300 px-2 cursor-pointer ${question.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isShown ? "Ukryj" : "Pokaż"}</button>
                                         </div>
                                         {/* answers */}
                                         <div className={`mx-6 flex-col gap-4 pb-2 ${question.answersShown ? "flex" : "hidden"}`}>
-                                            {question.answers.map((answer, index) => (
-                                                <div key={question.id + "answers" + index} className="flex justify-between border-dotted border-b-2 border-yellow-300 pb-2">
+                                            {Object.entries(question.answers).map(([id, answer]) => (
+                                                <div key={question.id + "answers" + id} className="flex justify-between border-dotted border-b-2 border-yellow-300 pb-2">
                                                     <p>{answer.answer}</p>
                                                     <div className="flex flex-nowrap gap-4">
                                                         <p>{answer.value}</p>
-                                                        <button className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
+                                                        <button onClick={() => {toggleAnswer(question.id, id)}} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
                                                     </div>
                                                 </div>
                                             ))}
