@@ -59,7 +59,10 @@ const Admin = () => {
     }
 
     // Show answers accordion component.
-    const toggleAnswers = (id) => {
+    const toggleAnswers = (e, id) => {
+
+        if(e.target.classList.contains("toggleAnswersButton")) return;
+
         setQuestions(prev => 
             prev.map(question => 
                 question.id === id ? { ...question, answersShown: !question.answersShown} : { ...question, answersShown: false }
@@ -67,9 +70,13 @@ const Admin = () => {
         );
     }
 
+    const toggleQuestion = (id) => {
+        console.log("toggling hehe");
+    }
+
     // Toggle answer isShown boolean in database.
     const toggleAnswer = async (questionId, answerId) => {
-        console.log(questionId, answerId);
+        //console.log(questionId, answerId);
         try {
             const ref = doc(db, "questions", questionId);
             const docSnap = await getDoc(ref);
@@ -96,7 +103,7 @@ const Admin = () => {
                 })
             )
 
-            console.log("toggled answer for questionId " + questionId + "and answerId" + answerId);
+            console.log("toggled answer for questionId " + questionId + " and answerId " + answerId);
         }
         catch(err) {
             console.error(err.message);
@@ -199,9 +206,9 @@ const Admin = () => {
                                 return (
                                     <div key={question.id} className="border-solid border-t border-yellow-300 last:border-b flex flex-col gap-2">
                                         {/* question */}
-                                        <div onClick={() => {toggleAnswers(question.id)}} className="flex flex-nowrap justify-between p-2 cursor-pointer">
+                                        <div onClick={(e) => {toggleAnswers(e, question.id)}} className="flex flex-nowrap justify-between p-2 cursor-pointer">
                                             <p>{index + 1}. {question.question}</p>
-                                            <button className={`border-solid border border-yellow-300 px-2 cursor-pointer ${question.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isShown ? "Ukryj" : "Pokaż"}</button>
+                                            <button onClick={() => {toggleQuestion(question.id)}} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isShown ? "Ukryj" : "Pokaż"}</button>
                                         </div>
                                         {/* answers */}
                                         <div className={`mx-6 flex-col gap-4 pb-2 ${question.answersShown ? "flex" : "hidden"}`}>
