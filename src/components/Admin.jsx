@@ -57,6 +57,14 @@ const Admin = () => {
         }
     }
 
+    const toggleAnswers = (id) => {
+        setQuestions(prev => 
+            prev.map(question => 
+                question.id === id ? { ...question, answersShown: !question.answersShown} : { ...question, answersShown: false }
+            )
+        )
+    }
+
     useEffect(() => {
 
         signInAnonymously(auth).catch(err => {
@@ -100,10 +108,10 @@ const Admin = () => {
                     ...doc.data(),
                 }));
 
-                console.log(data);
-                data[0].answers.map((answer) => {
-                    console.log(answer.answer)
-                })
+                // console.log(data);
+                // data[0].answers.map((answer) => {
+                //     console.log(answer.answer)
+                // })
                 setQuestions(data);
                 console.log("fetched questions.");
             }
@@ -143,22 +151,27 @@ const Admin = () => {
 
             {/* Questions */}
             <div className="flex-1 w-screen">
+                {/* When loading */}
                 {questions === null && <h1 className="text-center">Loading questions...</h1>}
 
+                {/* Already loaded */}
                 {questions != null &&
                     <div className="w-screen flex items-center flex-col gap-4">
                         <h1 className="text-center">Questions</h1>
+
                         <div className="min-w-fit w-[70vw]">
                             {questions.map((question, index) => {
                                 return (
-                                    <div key={question.id} className="border-solid border-t border-yellow-300 last:border-b pt-2 pb-4 flex flex-col gap-2">
-                                        <div className="flex flex-nowrap justify-between">
+                                    <div key={question.id} className="border-solid border-t border-yellow-300 last:border-b flex flex-col gap-2">
+                                        {/* question */}
+                                        <div className="flex flex-nowrap justify-between p-2 cursor-pointer" onClick={() => {toggleAnswers(question.id)}}>
                                             <p>{index + 1}. {question.question}</p>
-                                            <button className="border-solid border border-yellow-300 px-2 cursor-pointer bg-yellow-300 text-black">{question.answersShown ? "Ukryj" : "Pokaż"}</button>
+                                            <button className="border-solid border border-yellow-300 px-2 cursor-pointer bg-yellow-300 text-black">{question.isShown ? "Ukryj" : "Pokaż"}</button>
                                         </div>
-                                        <div className="mx-6 flex flex-col gap-4">
-                                            {question.answers.map((answer) => (
-                                                <div className="flex justify-between border-dotted border-b-2 border-yellow-300 pb-2">
+                                        {/* answers */}
+                                        <div className={`mx-6 flex-col gap-4 pb-2 ${question.answersShown ? "flex" : "hidden"}`}>
+                                            {question.answers.map((answer, index) => (
+                                                <div key={question.id + "answers" + index} className="flex justify-between border-dotted border-b-2 border-yellow-300 pb-2">
                                                     <p>{answer.answer}</p>
                                                     <div className="flex flex-nowrap gap-4">
                                                         <p>{answer.value}</p>
