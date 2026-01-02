@@ -23,6 +23,9 @@ const Admin = () => {
     const teamOneName = useRef("");
     const teamTwoName = useRef("");
 
+    const [answeringTeam, setAnsweringTeam] = useState();
+    const [mistakes, setMistakes] = useState();
+
     const teamRefs = {
         team1: teamOneName,
         team2: teamTwoName,
@@ -61,17 +64,63 @@ const Admin = () => {
     // Show answers accordion component.
     const toggleAnswers = (e, id) => {
 
-        if(e.target.classList.contains("toggleAnswersButton")) return;
+        if (e.target.classList.contains("toggleAnswersButton")) return;
 
-        setQuestions(prev => 
-            prev.map(question => 
-                question.id === id ? { ...question, answersShown: !question.answersShown} : { ...question, answersShown: false }
+        setQuestions(prev =>
+            prev.map(question =>
+                question.id === id ? { ...question, answersShown: !question.answersShown } : { ...question, answersShown: false }
             )
         );
     }
 
-    const toggleQuestion = (id) => {
-        console.log("toggling hehe");
+    const toggleQuestion = async (id) => {
+
+        try {
+            const snap = await getDoc(doc(db, "game_data", "game_data"))
+            const activeQuestion = snap.data().activeQuestion;
+            console.log(activeQuestion);
+
+            if (activeQuestion != id) {
+
+                await updateDoc(
+                    doc(db, "game_data", "game_data"),
+                    { activeQuestion: id }
+                );
+
+                setQuestions(prev =>
+                    prev.map(question => {
+                        if (question.id != id) {
+                            question.isActive = false
+                        }
+                        else question.isActive = true;
+
+                        console.log(question);
+                        return question;
+                    })
+                );
+            }
+            else {
+
+                await updateDoc(
+                    doc(db, "game_data", "game_data"),
+                    { activeQuestion: -1 }
+                );
+
+                setQuestions(prev =>
+                    prev.map(question => {
+                        question.isActive = false;
+
+                        return question;
+                    })
+                );
+            }
+
+            console.log("Toggled active question.")
+        }
+        catch (err) {
+            console.error(err.message);
+        }
+
     }
 
     // Toggle answer isShown boolean in database.
@@ -88,9 +137,9 @@ const Admin = () => {
             );
 
 
-            setQuestions(prev => 
+            setQuestions(prev =>
                 prev.map(question => {
-                    if(question.id != questionId) return question;
+                    if (question.id != questionId) return question;
 
                     const newAnswers = Object.fromEntries(
                         Object.entries(question.answers).map(([id, answer]) => [
@@ -98,16 +147,21 @@ const Admin = () => {
                             id === answerId ? { ...answer, isShown: !current } : answer
                         ])
                     )
-                    
+
                     return { ...question, answers: newAnswers };
                 })
             )
 
             console.log("toggled answer for questionId " + questionId + " and answerId " + answerId);
         }
-        catch(err) {
+        catch (err) {
             console.error(err.message);
         }
+    }
+
+    const selectAnsweringTeam = (team) => {
+        if (team === answeringTeam) setAnsweringTeam(0)
+        else setAnsweringTeam(team);
     }
 
     useEffect(() => {
@@ -116,7 +170,7 @@ const Admin = () => {
             console.error("Anon auth failed:", err);
         });
 
-        const fetchAllTeams = async () => {
+        const fetchTeams = async () => {
             try {
 
                 const results = await Promise.all(
@@ -150,11 +204,21 @@ const Admin = () => {
                 const data = docsSnap.docs.map(doc => ({
                     id: doc.id,
                     answersShown: false,
+                    isActive: false,
                     ...doc.data(),
                 }));
 
-                //console.log(data);
-                setQuestions(data);
+                const gameDataSnap = await getDoc(doc(db, "game_data", "game_data"));
+
+                const activeQuestion = gameDataSnap.data().activeQuestion;
+
+                const finalData = data.map(doc => {
+                    if (parseInt(doc.id) === parseInt(activeQuestion)) doc.isActive = true;
+                    return doc;
+                })
+
+                //console.log(finalData);
+                setQuestions(finalData);
                 console.log("fetched questions.");
             }
             catch (err) {
@@ -167,7 +231,7 @@ const Admin = () => {
 
             console.log("Auth ready");
 
-            fetchAllTeams();
+            fetchTeams();
             fetchQuestions();
         });
 
@@ -180,14 +244,53 @@ const Admin = () => {
 
             {/* Teams */}
             <div className="w-screen flex justify-between p-5">
-                <div className="flex gap-2 flex-nowrap h-fit">
-                    <input ref={teamOneName} defaultValue="Loading..." placeholder="Nazwa drużyny 1" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
-                    <button onClick={() => { updateTeamName("team1") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
+
+                {/* team 1 */}
+                <div className="flex flex-nowrap flex-col gap-2">
+                    <div className="flex gap-2 flex-nowrap h-fit">
+                        <input ref={teamOneName} defaultValue="Loading..." placeholder="Nazwa drużyny 1" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
+                        <button onClick={() => { updateTeamName("team1") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
+                    </div>
+
+                    {answeringTeam != 2 &&
+                        <button onClick={() => { selectAnsweringTeam(1) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 1 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
+                    }
+
+                    {answeringTeam === 1 &&
+                        <div className="w-full flex">
+                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                        </div>
+                    }
+
+                    {answeringTeam === 2 &&
+                        <button className="w-full border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                    }
                 </div>
 
-                <div className="flex gap-2 flex-nowrap h-fit">
-                    <input ref={teamTwoName} defaultValue="Loading..." placeholder="Nazwa drużyny 2" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
-                    <button onClick={() => { updateTeamName("team2") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
+                {/* team 2 */}
+                <div className="flex flex-nowrap flex-col gap-2">
+                    <div className="flex gap-2 flex-nowrap h-fit">
+                        <input ref={teamTwoName} defaultValue="Loading..." placeholder="Nazwa drużyny 2" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
+                        <button onClick={() => { updateTeamName("team2") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
+                    </div>
+
+                    {answeringTeam != 1 &&
+                        <button onClick={() => { selectAnsweringTeam(2) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 2 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
+                    }
+
+                    {answeringTeam === 2 &&
+                        <div className="w-full flex">
+                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                        </div>
+                    }
+
+                    {answeringTeam === 1 &&
+                        <button className="w-full border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                    }
                 </div>
             </div>
 
@@ -206,9 +309,9 @@ const Admin = () => {
                                 return (
                                     <div key={question.id} className="border-solid border-t border-yellow-300 last:border-b flex flex-col gap-2">
                                         {/* question */}
-                                        <div onClick={(e) => {toggleAnswers(e, question.id)}} className="flex flex-nowrap justify-between p-2 cursor-pointer">
+                                        <div onClick={(e) => { toggleAnswers(e, question.id) }} className="flex flex-nowrap justify-between p-2 cursor-pointer">
                                             <p>{index + 1}. {question.question}</p>
-                                            <button onClick={() => {toggleQuestion(question.id)}} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isShown ? "Ukryj" : "Pokaż"}</button>
+                                            <button onClick={() => { toggleQuestion(question.id) }} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
                                         </div>
                                         {/* answers */}
                                         <div className={`mx-6 flex-col gap-4 pb-2 ${question.answersShown ? "flex" : "hidden"}`}>
@@ -217,7 +320,7 @@ const Admin = () => {
                                                     <p>{answer.answer}</p>
                                                     <div className="flex flex-nowrap gap-4">
                                                         <p>{answer.value}</p>
-                                                        <button onClick={() => {toggleAnswer(question.id, id)}} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
+                                                        <button onClick={() => { toggleAnswer(question.id, id) }} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
                                                     </div>
                                                 </div>
                                             ))}
