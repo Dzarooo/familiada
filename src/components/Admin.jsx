@@ -25,7 +25,7 @@ const Admin = () => {
 
     const [isAnyQuestionShown, setIsAnyQuestionShown] = useState(false);
 
-    const [answeringTeam, setAnsweringTeam] = useState(0);
+    const [answeringTeam, setAnsweringTeam] = useState(-1);
     const [mistakes, setMistakes] = useState(0);
 
     const teamRefs = {
@@ -107,7 +107,11 @@ const Admin = () => {
 
                 await updateDoc(
                     doc(db, "game_data", "game_data"),
-                    { activeQuestion: -1 }
+                    {
+                        activeQuestion: -1,
+                        answeringTeam: -1,
+                        mistakes: 0
+                    }
                 );
 
                 setQuestions(prev =>
@@ -118,7 +122,7 @@ const Admin = () => {
                     })
                 );
 
-                setAnsweringTeam(0);
+                setAnsweringTeam(-1);
                 setMistakes(0);
                 setIsAnyQuestionShown(false);
             }
@@ -167,9 +171,22 @@ const Admin = () => {
         }
     }
 
-    const selectAnsweringTeam = (team) => {
-        if (team === answeringTeam) setAnsweringTeam(0)
-        else setAnsweringTeam(team);
+    const selectAnsweringTeam = async (team) => {
+        if (team === answeringTeam) {
+            await updateDoc(
+                doc(db, "game_data", "game_data"),
+                { answeringTeam: -1 }
+            )
+            setAnsweringTeam(-1)
+
+        }
+        else {
+            await updateDoc(
+                doc(db, "game_data", "game_data"),
+                { answeringTeam: team }
+            )
+            setAnsweringTeam(team);
+        }
     }
 
     useEffect(() => {
@@ -177,6 +194,17 @@ const Admin = () => {
         signInAnonymously(auth).catch(err => {
             console.error("Anon auth failed:", err);
         });
+
+        const fetchGameData = async () => {
+            const gameDataSnap = await getDoc(doc(db, "game_data", "game_data"));
+            const gameData = gameDataSnap.data();
+
+            selectAnsweringTeam(gameData.answeringTeam);
+            setMistakes(gameData.mistakes);
+            if(gameData.activeQuestion != -1 ) setIsAnyQuestionShown(true)
+
+            return gameData
+        }
 
         const fetchTeams = async () => {
             try {
@@ -205,7 +233,7 @@ const Admin = () => {
             }
         };
 
-        const fetchQuestions = async () => {
+        const fetchQuestions = async (activeQuestion) => {
             try {
                 const docsSnap = await getDocs(collection(db, "questions"))
 
@@ -215,10 +243,6 @@ const Admin = () => {
                     isActive: false,
                     ...doc.data(),
                 }));
-
-                const gameDataSnap = await getDoc(doc(db, "game_data", "game_data"));
-
-                const activeQuestion = gameDataSnap.data().activeQuestion;
 
                 const finalData = data.map(doc => {
                     if (parseInt(doc.id) === parseInt(activeQuestion)) doc.isActive = true;
@@ -234,13 +258,14 @@ const Admin = () => {
             }
         }
 
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
+        const unsubAuth = onAuthStateChanged(auth, async (user) => {
             if (!user) return;
 
             console.log("Auth ready");
-
+            
+            const gameData = await fetchGameData();
             fetchTeams();
-            fetchQuestions();
+            fetchQuestions(gameData.activeQuestion);
         });
 
         return () => unsubAuth();
@@ -260,11 +285,11 @@ const Admin = () => {
                         <button onClick={() => { updateTeamName("team1") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
                     </div>
 
-                    {answeringTeam != 2 && isAnyQuestionShown &&
-                        <button onClick={() => { selectAnsweringTeam(1) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 1 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
+                    {answeringTeam != 1 && isAnyQuestionShown &&
+                        <button onClick={() => { selectAnsweringTeam(0) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 0 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
                     }
 
-                    {answeringTeam === 1 &&
+                    {answeringTeam === 0 &&
                         <div className="w-full flex">
                             <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
                             <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
@@ -272,7 +297,7 @@ const Admin = () => {
                         </div>
                     }
 
-                    {answeringTeam === 2 &&
+                    {answeringTeam === 1 &&
                         <button className="w-full border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
                     }
                 </div>
@@ -284,11 +309,11 @@ const Admin = () => {
                         <button onClick={() => { updateTeamName("team2") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
                     </div>
 
-                    {answeringTeam != 1 && isAnyQuestionShown &&
-                        <button onClick={() => { selectAnsweringTeam(2) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 2 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
+                    {answeringTeam != 0 && isAnyQuestionShown &&
+                        <button onClick={() => { selectAnsweringTeam(1) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 1 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
                     }
 
-                    {answeringTeam === 2 &&
+                    {answeringTeam === 1 &&
                         <div className="w-full flex">
                             <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
                             <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
@@ -296,7 +321,7 @@ const Admin = () => {
                         </div>
                     }
 
-                    {answeringTeam === 1 &&
+                    {answeringTeam === 0 &&
                         <button className="w-full border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
                     }
                 </div>
