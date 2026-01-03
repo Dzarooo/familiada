@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, updateDoc, getDocs, collection } from "firebase/firestore";
+import { getFirestore, doc, getDoc, updateDoc, getDocs, collection, increment } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 const Admin = () => {
@@ -80,7 +80,7 @@ const Admin = () => {
         try {
             const snap = await getDoc(doc(db, "game_data", "game_data"))
             const activeQuestion = snap.data().activeQuestion;
-            console.log(activeQuestion);
+            //console.log(activeQuestion);
 
             if (activeQuestion != id) {
 
@@ -96,7 +96,6 @@ const Admin = () => {
                         }
                         else question.isActive = true;
 
-                        console.log(question);
                         return question;
                     })
                 );
@@ -104,7 +103,6 @@ const Admin = () => {
                 setIsAnyQuestionShown(true);
             }
             else {
-
                 await updateDoc(
                     doc(db, "game_data", "game_data"),
                     {
@@ -175,18 +173,33 @@ const Admin = () => {
         if (team === answeringTeam) {
             await updateDoc(
                 doc(db, "game_data", "game_data"),
-                { answeringTeam: -1 }
+                {
+                    answeringTeam: -1,
+                    mistakes: 0
+                }
             )
             setAnsweringTeam(-1)
-
+            setMistakes(0);
         }
         else {
             await updateDoc(
                 doc(db, "game_data", "game_data"),
-                { answeringTeam: team }
+                {
+                    answeringTeam: team,
+                    mistakes: 0
+                }
             )
             setAnsweringTeam(team);
+            setMistakes(0);
         }
+    }
+
+    const increaseMistakes = async () => {
+        await updateDoc(
+            doc(db, "game_data", "game_data"),
+            { mistakes: increment(1) }
+        )
+        setMistakes(prev => prev + 1);
     }
 
     useEffect(() => {
@@ -199,9 +212,9 @@ const Admin = () => {
             const gameDataSnap = await getDoc(doc(db, "game_data", "game_data"));
             const gameData = gameDataSnap.data();
 
-            selectAnsweringTeam(gameData.answeringTeam);
+            setAnsweringTeam(gameData.answeringTeam);
             setMistakes(gameData.mistakes);
-            if(gameData.activeQuestion != -1 ) setIsAnyQuestionShown(true)
+            if (gameData.activeQuestion != -1) setIsAnyQuestionShown(true)
 
             return gameData
         }
@@ -262,7 +275,7 @@ const Admin = () => {
             if (!user) return;
 
             console.log("Auth ready");
-            
+
             const gameData = await fetchGameData();
             fetchTeams();
             fetchQuestions(gameData.activeQuestion);
@@ -271,6 +284,95 @@ const Admin = () => {
         return () => unsubAuth();
 
     }, [db]);
+
+    // im sorry for myself and for anyone seeing this...
+    const getMistakesStyleButton = (button) => {
+        if (mistakes == 0) {
+            if (button == 0) {
+                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+            }
+            else if (button == 1) {
+                return "border-gray-400 text-gray-400 bg-gray-900";
+            }
+            else if (button == 2) {
+                return "border-gray-400 text-gray-400 bg-gray-900";
+            }
+            else if (button == 3) {
+                return "border-gray-400 text-gray-400 bg-gray-900";
+            }
+            else {
+                console.error("invalid button order number provided.")
+            }
+        }
+        else if (mistakes == 1) {
+            if (button == 0) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 1) {
+                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+            }
+            else if (button == 2) {
+                return "border-gray-400 text-gray-400 bg-gray-900";
+            }
+            else if (button == 3) {
+                return "border-gray-400 text-gray-400 bg-gray-900";
+            }
+            else {
+                console.error("invalid button order number provided.")
+            }
+        }
+        else if (mistakes == 2) {
+            if (button == 0) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 1) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 2) {
+                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+            }
+            else if (button == 3) {
+                return "border-gray-400 text-gray-400 bg-gray-900";
+            }
+            else {
+                console.error("invalid button order number provided.")
+            }
+        }
+        else if (mistakes == 3) {
+            if (button == 0) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 1) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 2) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 3) {
+                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+            }
+            else {
+                console.error("invalid button order number provided.")
+            }
+        }
+        else if (mistakes == 4) {
+            if (button == 0) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 1) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 2) {
+                return "text-red-950 bg-red-400";
+            }
+            else if (button == 3) {
+                return "text-red-950 bg-red-400";
+            }
+            else {
+                console.error("invalid button order number provided.")
+            }
+        }
+    }
 
     return (
         <div className="w-screen min-h-screen flex flex-col">
@@ -291,14 +393,14 @@ const Admin = () => {
 
                     {answeringTeam === 0 &&
                         <div className="w-full flex">
-                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
-                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
-                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                            <button disabled={mistakes != 0} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(0)} `}>X</button>
+                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(1)}`}>X</button>
+                            <button disabled={mistakes != 2} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(2)} `}>X</button>
                         </div>
                     }
 
                     {answeringTeam === 1 &&
-                        <button className="w-full border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                        <button disabled={mistakes != 3} onClick={() => { increaseMistakes() }} className={`w-full border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(3)} `}>X</button>
                     }
                 </div>
 
@@ -315,14 +417,14 @@ const Admin = () => {
 
                     {answeringTeam === 1 &&
                         <div className="w-full flex">
-                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
-                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
-                            <button className="flex-1/3 border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                            <button disabled={mistakes != 0} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(0)} `}>X</button>
+                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(1)} `}>X</button>
+                            <button disabled={mistakes != 2} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(2)} `}>X</button>
                         </div>
                     }
 
                     {answeringTeam === 0 &&
-                        <button className="w-full border border-solid border-red-400 text-red-400 bg-red-950/50 cursor-pointer hover:bg-red-950 font-extrabold">X</button>
+                        <button disabled={mistakes != 3} onClick={() => { increaseMistakes() }} className={`w-full border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(3)} `}>X</button>
                     }
                 </div>
             </div>
