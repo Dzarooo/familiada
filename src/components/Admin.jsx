@@ -23,8 +23,10 @@ const Admin = () => {
     const teamOneName = useRef("");
     const teamTwoName = useRef("");
 
-    const [answeringTeam, setAnsweringTeam] = useState();
-    const [mistakes, setMistakes] = useState();
+    const [isAnyQuestionShown, setIsAnyQuestionShown] = useState(false);
+
+    const [answeringTeam, setAnsweringTeam] = useState(0);
+    const [mistakes, setMistakes] = useState(0);
 
     const teamRefs = {
         team1: teamOneName,
@@ -98,6 +100,8 @@ const Admin = () => {
                         return question;
                     })
                 );
+
+                setIsAnyQuestionShown(true);
             }
             else {
 
@@ -113,6 +117,10 @@ const Admin = () => {
                         return question;
                     })
                 );
+
+                setAnsweringTeam(0);
+                setMistakes(0);
+                setIsAnyQuestionShown(false);
             }
 
             console.log("Toggled active question.")
@@ -252,7 +260,7 @@ const Admin = () => {
                         <button onClick={() => { updateTeamName("team1") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
                     </div>
 
-                    {answeringTeam != 2 &&
+                    {answeringTeam != 2 && isAnyQuestionShown &&
                         <button onClick={() => { selectAnsweringTeam(1) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 1 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
                     }
 
@@ -276,7 +284,7 @@ const Admin = () => {
                         <button onClick={() => { updateTeamName("team2") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
                     </div>
 
-                    {answeringTeam != 1 &&
+                    {answeringTeam != 1 && isAnyQuestionShown &&
                         <button onClick={() => { selectAnsweringTeam(2) }} className={`w-full border-solid border cursor-pointer border-yellow-300 ${answeringTeam == 2 ? "bg-yellow-300 text-black hover:bg-yellow-300/85" : "bg-transparent text-yellow-300 hover:bg-yellow-500/15"}`}><i className="bi bi-megaphone-fill"></i></button>
                     }
 
