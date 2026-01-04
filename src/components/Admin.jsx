@@ -80,7 +80,7 @@ const Admin = () => {
     // Show answers accordion component.
     const toggleAnswers = (e, id) => {
 
-        if (e.target.classList.contains("toggleAnswersButton") || e.target.classList.contains("deleteButton")) return;
+        if (e.target.classList.contains("questionButton")) return;
 
         setQuestions(prev =>
             prev.map(question =>
@@ -234,6 +234,39 @@ const Admin = () => {
             )
 
             console.log("toggled answer for questionId " + questionId + " and answerId " + answerId);
+        }
+        catch (err) {
+            console.error(err.message);
+        }
+    }
+
+    const showAllAnswers = async (id) => {
+        try {
+            await updateDoc(
+                doc(db, "questions", id),
+                {
+                    "answers.0.isShown": true,
+                    "answers.1.isShown": true,
+                    "answers.2.isShown": true,
+                    "answers.3.isShown": true,
+                    "answers.4.isShown": true
+                }
+            )
+
+            setQuestions(prev =>
+                prev.map(question => {
+                    if (question.id != id) return question;
+
+                    const newAnswers = Object.fromEntries(
+                        Object.entries(question.answers).map(([id, answer]) => [
+                            id,
+                            { ...answer, isShown: true }
+                        ])
+                    )
+
+                    return { ...question, answers: newAnswers };
+                })
+            )
         }
         catch (err) {
             console.error(err.message);
@@ -609,8 +642,11 @@ const Admin = () => {
                                             <div onClick={(e) => { toggleAnswers(e, question.id) }} className="flex flex-nowrap justify-between p-2 cursor-pointer">
                                                 <p>{index + 1}. {question.question}</p>
                                                 <div className="flex flex-nowrap gap-2">
-                                                    <button onClick={() => { toggleQuestion(question.id) }} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
-                                                    <button onClick={() => { deleteQuestion(question.id) }} className="deleteButton bg-yellow-300 text-black px-2 border border-solid border-yellow-300 cursor-pointer">Usuń</button>
+                                                    {question.isActive &&
+                                                        <button onClick={() => { showAllAnswers(question.id) }} className="questionButton bg-yellow-300 text-black px-2 border border-solid border-yellow-300 cursor-pointer">Odkryj wszystkie odpowiedzi</button>
+                                                    }
+                                                    <button onClick={() => { toggleQuestion(question.id) }} className={`questionButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
+                                                    <button onClick={() => { deleteQuestion(question.id) }} className="questionButton bg-yellow-300 text-black px-2 border border-solid border-yellow-300 cursor-pointer">Usuń</button>
                                                 </div>
                                             </div>
                                             {/* answers */}
