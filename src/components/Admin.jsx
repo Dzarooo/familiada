@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, updateDoc, getDocs, collection, increment, addDoc, serverTimestamp, orderBy, query } from "firebase/firestore";
+import { getFirestore, doc, getDoc, updateDoc, getDocs, collection, increment, addDoc, serverTimestamp, orderBy, query, deleteDoc } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 const Admin = () => {
@@ -80,7 +80,7 @@ const Admin = () => {
     // Show answers accordion component.
     const toggleAnswers = (e, id) => {
 
-        if (e.target.classList.contains("toggleAnswersButton")) return;
+        if (e.target.classList.contains("toggleAnswersButton") || e.target.classList.contains("deleteButton")) return;
 
         setQuestions(prev =>
             prev.map(question =>
@@ -272,7 +272,7 @@ const Admin = () => {
             newQuestion.answersShown = false;
             newQuestion.isActive = false;
 
-            setQuestions(prev => [ ...prev, newQuestion ])
+            setQuestions(prev => [...prev, newQuestion])
 
             console.log("Passed", newQuestion);
         }
@@ -280,10 +280,23 @@ const Admin = () => {
             console.error(err.message);
         }
 
-        // await updateDoc(doc(db, "questions", "1"), {
-        //     createdAt: serverTimestamp()
-        // });
+    }
 
+    const deleteQuestion = async (id) => {
+        try {
+            await deleteDoc(doc(db, "questions", id))
+
+
+            setQuestions(prev => {
+                const updated = prev.filter(question => question.id != id);
+                return updated;
+            })
+
+            console.log("deleted question with id", id)
+        }
+        catch(err) {
+            console.log(err.message);
+        }
     }
 
     useEffect(() => {
@@ -357,7 +370,7 @@ const Admin = () => {
                 console.log("fetched questions.");
             }
             catch (err) {
-                console.error(err);
+                console.error(err.message);
             }
         }
 
@@ -537,7 +550,10 @@ const Admin = () => {
                                             {/* question */}
                                             <div onClick={(e) => { toggleAnswers(e, question.id) }} className="flex flex-nowrap justify-between p-2 cursor-pointer">
                                                 <p>{index + 1}. {question.question}</p>
-                                                <button onClick={() => { toggleQuestion(question.id) }} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
+                                                <div className="flex flex-nowrap gap-2">
+                                                    <button onClick={() => { toggleQuestion(question.id) }} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
+                                                    <button onClick={() => { deleteQuestion(question.id) }} className="deleteButton bg-yellow-300 text-black px-2 border border-solid border-yellow-300 cursor-pointer">Usuń</button>
+                                                </div>
                                             </div>
                                             {/* answers */}
                                             <div className={`mx-6 flex-col gap-4 pb-2 ${question.answersShown ? "flex" : "hidden"}`}>
