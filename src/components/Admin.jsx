@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, updateDoc, getDocs, collection, increment } from "firebase/firestore";
+import { getFirestore, doc, getDoc, updateDoc, getDocs, collection, increment, addDoc, serverTimestamp, orderBy, query } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 const Admin = () => {
@@ -33,7 +33,21 @@ const Admin = () => {
         team2: teamTwoName,
     }
 
-    const [questions, setQuestions] = useState(null)
+    const [questions, setQuestions] = useState(null);
+
+    //This code do be getting worse with each commit (and deadline being closer :skull:)
+    const formQuestion = useRef("");
+    const formAnswer1 = useRef("");
+    const formAnswer2 = useRef("");
+    const formAnswer3 = useRef("");
+    const formAnswer4 = useRef("");
+    const formAnswer5 = useRef("");
+    const formValue1 = useRef("");
+    const formValue2 = useRef("");
+    const formValue3 = useRef("");
+    const formValue4 = useRef("");
+    const formValue5 = useRef("");
+
 
     // Update given team name in database.
     const updateTeamName = async (team) => {
@@ -202,6 +216,76 @@ const Admin = () => {
         setMistakes(prev => prev + 1);
     }
 
+    const createQuestion = async () => {
+
+        if (
+            formQuestion.current.value == "" ||
+            formAnswer1.current.value == "" ||
+            formAnswer2.current.value == "" ||
+            formAnswer3.current.value == "" ||
+            formAnswer4.current.value == "" ||
+            formAnswer5.current.value == "" ||
+            formValue1.current.value == "" ||
+            formValue2.current.value == "" ||
+            formValue3.current.value == "" ||
+            formValue4.current.value == "" ||
+            formValue5.current.value == ""
+        ) {
+            console.error("At least one input is empty.")
+            return;
+        }
+
+        const newQuestion = {
+            question: formQuestion.current.value,
+            createdAt: serverTimestamp(),
+            answers: {
+                0: {
+                    answer: formAnswer1.current.value,
+                    value: formValue1.current.value,
+                },
+                1: {
+                    answer: formAnswer2.current.value,
+                    value: formValue2.current.value,
+                },
+                2: {
+                    answer: formAnswer3.current.value,
+                    value: formValue3.current.value,
+                },
+                3: {
+                    answer: formAnswer4.current.value,
+                    value: formValue4.current.value,
+                },
+                4: {
+                    answer: formAnswer5.current.value,
+                    value: formValue5.current.value,
+                }
+            }
+        }
+
+        try {
+            const docRef = await addDoc(
+                collection(db, "questions"),
+                newQuestion
+            )
+
+            newQuestion.id = docRef.id;
+            newQuestion.answersShown = false;
+            newQuestion.isActive = false;
+
+            setQuestions(prev => [ ...prev, newQuestion ])
+
+            console.log("Passed", newQuestion);
+        }
+        catch (err) {
+            console.error(err.message);
+        }
+
+        // await updateDoc(doc(db, "questions", "1"), {
+        //     createdAt: serverTimestamp()
+        // });
+
+    }
+
     useEffect(() => {
 
         signInAnonymously(auth).catch(err => {
@@ -248,7 +332,13 @@ const Admin = () => {
 
         const fetchQuestions = async (activeQuestion) => {
             try {
-                const docsSnap = await getDocs(collection(db, "questions"))
+
+                const questionsQuery = query(
+                    collection(db, "questions"),
+                    orderBy("createdAt", "asc")
+                );
+
+                const docsSnap = await getDocs(questionsQuery);
 
                 const data = docsSnap.docs.map(doc => ({
                     id: doc.id,
@@ -267,7 +357,7 @@ const Admin = () => {
                 console.log("fetched questions.");
             }
             catch (err) {
-                console.error(err.message);
+                console.error(err);
             }
         }
 
@@ -440,30 +530,66 @@ const Admin = () => {
                         <h1 className="text-center">Pytania</h1>
 
                         <div className="min-w-fit w-[70vw]">
-                            {questions.map((question, index) => {
-                                return (
-                                    <div key={question.id} className="border-solid border-t border-yellow-300 last:border-b flex flex-col gap-2">
-                                        {/* question */}
-                                        <div onClick={(e) => { toggleAnswers(e, question.id) }} className="flex flex-nowrap justify-between p-2 cursor-pointer">
-                                            <p>{index + 1}. {question.question}</p>
-                                            <button onClick={() => { toggleQuestion(question.id) }} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
-                                        </div>
-                                        {/* answers */}
-                                        <div className={`mx-6 flex-col gap-4 pb-2 ${question.answersShown ? "flex" : "hidden"}`}>
-                                            {Object.entries(question.answers).map(([id, answer]) => (
-                                                <div key={question.id + "answers" + id} className="flex justify-between border-dotted border-b-2 border-yellow-300 pb-2">
-                                                    <p>{answer.answer}</p>
-                                                    <div className="flex flex-nowrap gap-4">
-                                                        <p>{answer.value}</p>
-                                                        <button onClick={() => { toggleAnswer(question.id, id) }} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
+                            <div>
+                                {questions.map((question, index) => {
+                                    return (
+                                        <div key={question.id} className={`border-solid border-t border-yellow-300 last:border-b flex flex-col gap-2 ${question.answersShown ? "bg-yellow-500/10" : "bg-transparent"} `}>
+                                            {/* question */}
+                                            <div onClick={(e) => { toggleAnswers(e, question.id) }} className={`flex flex-nowrap justify-between p-2 cursor-pointer  `}>
+                                                <p>{index + 1}. {question.question}</p>
+                                                <button onClick={() => { toggleQuestion(question.id) }} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
+                                            </div>
+                                            {/* answers */}
+                                            <div className={`mx-6 flex-col gap-4 pb-2 ${question.answersShown ? "flex" : "hidden"}`}>
+                                                {Object.entries(question.answers).map(([id, answer]) => (
+                                                    <div key={question.id + "answers" + id} className="flex justify-between border-dotted border-b-2 border-yellow-300 pb-2">
+                                                        <p>{answer.answer}</p>
+                                                        <div className="flex flex-nowrap gap-4">
+                                                            <p>{answer.value}</p>
+                                                            <button onClick={() => { toggleAnswer(question.id, id) }} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
+                                    )
+                                })}
+                            </div>
+
+                            <div className="border-solid border-t border-yellow-300 border-b flex flex-col gap-2 pb-4 pt-2 mt-25">
+                                {/* question */}
+                                <input ref={formQuestion} placeholder="Treść pytania" className="outline-none"></input>
+                                {/* answers */}
+                                <div className="mx-6 flex-col gap-4 pb-2">
+                                    <div className="justify-between border-dotted border-b-2 border-yellow-300 pt-2 flex flex-nowrap">
+                                        <input ref={formAnswer1} placeholder="Odpowiedź 1" className="flex-1 outline-none"></input>
+                                        <input ref={formValue1} placeholder="Wartość 1" className="text-right outline-none"></input>
                                     </div>
-                                )
-                            })}
+                                    <div className="justify-between border-dotted border-b-2 border-yellow-300 pt-2 flex flex-nowrap">
+                                        <input ref={formAnswer2} placeholder="Odpowiedź 2" className="flex-1 outline-none"></input>
+                                        <input ref={formValue2} placeholder="Wartość 2" className="text-right outline-none"></input>
+                                    </div>
+                                    <div className="justify-between border-dotted border-b-2 border-yellow-300 pt-2 flex flex-nowrap">
+                                        <input ref={formAnswer3} placeholder="Odpowiedź 3" className="flex-1 outline-none"></input>
+                                        <input ref={formValue3} placeholder="Wartość 3" className="text-right outline-none"></input>
+                                    </div>
+                                    <div className="justify-between border-dotted border-b-2 border-yellow-300 pt-2 flex flex-nowrap">
+                                        <input ref={formAnswer4} placeholder="Odpowiedź 4" className="flex-1 outline-none"></input>
+                                        <input ref={formValue4} placeholder="Wartość 4" className="text-right outline-none"></input>
+                                    </div>
+                                    <div className="justify-between border-dotted border-b-2 border-yellow-300 pt-2 flex flex-nowrap">
+                                        <input ref={formAnswer5} placeholder="Odpowiedź 5" className="flex-1 outline-none"></input>
+                                        <input ref={formValue5} placeholder="Wartość 5" className="text-right outline-none"></input>
+                                    </div>
+
+                                </div>
+
+                                <button onClick={() => { createQuestion() }} className="bg-yellow-300 text-black w-fit px-2 cursor-pointer">Dodaj Pytanie</button>
+
+                            </div>
+
                         </div>
+
                     </div>
                 }
             </div>
