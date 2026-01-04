@@ -94,7 +94,6 @@ const Admin = () => {
         try {
             const snap = await getDoc(doc(db, "game_data", "game_data"))
             const activeQuestion = snap.data().activeQuestion;
-            //console.log(activeQuestion);
 
             if (activeQuestion != id) {
 
@@ -103,16 +102,55 @@ const Admin = () => {
                     { activeQuestion: id }
                 );
 
-                setQuestions(prev =>
-                    prev.map(question => {
-                        if (question.id != id) {
-                            question.isActive = false
+                if (activeQuestion != -1) {
+                    await updateDoc(
+                        doc(db, "questions", activeQuestion),
+                        {
+                            "answers.0.isShown": false,
+                            "answers.1.isShown": false,
+                            "answers.2.isShown": false,
+                            "answers.3.isShown": false,
+                            "answers.4.isShown": false
                         }
-                        else question.isActive = true;
+                    )
 
-                        return question;
-                    })
-                );
+                    setQuestions(prev =>
+                        prev.map(question => {
+
+                            if (question.id != id) {
+
+                                question.isActive = false
+
+                                const newAnswers = Object.fromEntries(
+                                    Object.entries(question.answers).map(([id, answer]) => [
+                                        id,
+                                        { ...answer, isShown: false }
+                                    ])
+                                )
+
+                                return { ...question, answers: newAnswers };
+                            }
+                            else question.isActive = true;
+
+                            return question;
+                        })
+                    );
+
+
+                }
+                else {
+
+                    setQuestions(prev =>
+                        prev.map(question => {
+                            if (question.id != id) {
+                                question.isActive = false
+                            }
+                            else question.isActive = true;
+
+                            return question;
+                        })
+                    );
+                }
 
                 setIsAnyQuestionShown(true);
             }
@@ -126,13 +164,32 @@ const Admin = () => {
                     }
                 );
 
+                await updateDoc(
+                    doc(db, "questions", activeQuestion),
+                    {
+                        "answers.0.isShown": false,
+                        "answers.1.isShown": false,
+                        "answers.2.isShown": false,
+                        "answers.3.isShown": false,
+                        "answers.4.isShown": false
+                    }
+                )
+
                 setQuestions(prev =>
                     prev.map(question => {
                         question.isActive = false;
+                        if (question.id != activeQuestion) return question;
 
-                        return question;
+                        const newAnswers = Object.fromEntries(
+                            Object.entries(question.answers).map(([id, answer]) => [
+                                id,
+                                { ...answer, isShown: false }
+                            ])
+                        )
+
+                        return { ...question, answers: newAnswers };
                     })
-                );
+                )
 
                 setAnsweringTeam(-1);
                 setMistakes(0);
@@ -294,7 +351,7 @@ const Admin = () => {
 
             console.log("deleted question with id", id)
         }
-        catch(err) {
+        catch (err) {
             console.log(err.message);
         }
     }
@@ -361,7 +418,8 @@ const Admin = () => {
                 }));
 
                 const finalData = data.map(doc => {
-                    if (parseInt(doc.id) === parseInt(activeQuestion)) doc.isActive = true;
+
+                    if (doc.id === activeQuestion) doc.isActive = true;
                     return doc;
                 })
 
