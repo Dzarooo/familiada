@@ -620,7 +620,9 @@ const Admin = () => {
                                                         <p>{answer.answer}</p>
                                                         <div className="flex flex-nowrap gap-4">
                                                             <p>{answer.value}</p>
-                                                            <button onClick={() => { toggleAnswer(question.id, id) }} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
+                                                            {question.isActive &&
+                                                                <button onClick={() => { toggleAnswer(question.id, id) }} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
+                                                            }
                                                         </div>
                                                     </div>
                                                 ))}
