@@ -535,7 +535,7 @@ const Admin = () => {
                                     return (
                                         <div key={question.id} className={`border-solid border-t border-yellow-300 last:border-b flex flex-col gap-2 ${question.answersShown ? "bg-yellow-500/10" : "bg-transparent"} `}>
                                             {/* question */}
-                                            <div onClick={(e) => { toggleAnswers(e, question.id) }} className={`flex flex-nowrap justify-between p-2 cursor-pointer  `}>
+                                            <div onClick={(e) => { toggleAnswers(e, question.id) }} className="flex flex-nowrap justify-between p-2 cursor-pointer">
                                                 <p>{index + 1}. {question.question}</p>
                                                 <button onClick={() => { toggleQuestion(question.id) }} className={`toggleAnswersButton border-solid border border-yellow-300 px-2 cursor-pointer ${question.isActive ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{question.isActive ? "Ukryj" : "Pokaż"}</button>
                                             </div>
