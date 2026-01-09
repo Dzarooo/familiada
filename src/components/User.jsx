@@ -30,6 +30,10 @@ const User = () => {
 
     const [activeQuestion, setActiveQuestion] = useState(null);
 
+    const [answeringTeam, setAnsweringTeam] = useState(-1);
+
+    const [mistakes, setMistakes] = useState(0);
+
 
     useEffect(() => {
 
@@ -78,6 +82,8 @@ const User = () => {
                 else pool = "" + pool;
 
                 setPool(pool);
+                setAnsweringTeam(data.answeringTeam);
+                setMistakes(data.mistakes);
 
 
                 if (data.activeQuestion == -1) {
@@ -136,125 +142,164 @@ const User = () => {
                 <div className="flex gap-4 flex-nowrap">
                     <p>{teamOneName}</p>
                     <p>{teamOnePoints}</p>
+                    {((answeringTeam === 0 && mistakes < 3) || (answeringTeam === 1 && mistakes === 3)) &&
+                        <i className="bi bi-megaphone-fill"></i>
+                    }
                 </div>
                 <div className="flex gap-4 flex-nowrap">
+                    {((answeringTeam === 1 && mistakes < 3) || (answeringTeam === 0 && mistakes === 3)) &&
+                        <i className="bi bi-megaphone-fill -scale-x-100"></i>
+                    }
                     <p>{teamTwoPoints}</p>
                     <p>{teamTwoName}</p>
                 </div>
             </div>
 
-            <div className="w-[70vw] flex-1 flex flex-col items-center justify-center gap-10">
-                {/* Question */}
-                <div className="w-[70vw] h-25">
-                    <p className="text-center text-4xl">{activeQuestion === null ? "Loading..." : activeQuestion?.question}</p>
+            <div className="flex-1 w-screen flex justify-between items-center">
+
+                {answeringTeam === 0 &&
+                    <div className="flex-1/4 flex flex-col items-center">
+                        <p className="text-[10rem] h-48">{mistakes > 0 && "X"}</p>
+                        <p className="text-[10rem] h-48">{mistakes > 1 && "X"}</p>
+                        <p className="text-[10rem] h-48">{mistakes > 2 && "X"}</p>
+                    </div>
+                }
+
+                {answeringTeam === 1 &&
+                    <div className="flex-1/4 flex flex-col items-center">
+                        <p className="text-[15rem] h-[72]">{mistakes > 3 && "X"}</p>
+                    </div>
+                }
+
+                <div className="w-[70vw] flex-1 flex flex-col items-center justify-center gap-10">
+                    {/* Question */}
+                    <div className="w-[70vw] h-25">
+                        <p className="text-center text-4xl">{activeQuestion === null ? "Loading..." : activeQuestion?.question}</p>
+                    </div>
+
+                    {/* Answers */}
+                    <div className="w-[70vw] flex flex-col flex-nowrap gap-4">
+
+                        <div className="flex gap-4">
+                            <p>1</p>
+                            <div className="flex-1 flex justify-between gap-4 items-end">
+                                <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[0].isShown && activeQuestion?.answers[0].answer}</p>
+                                <div>
+                                    <div className="flex flex-nowrap gap-1 h-10">
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[0].isShown && activeQuestion?.answers[0].value[0]}</p>
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[0].isShown && activeQuestion?.answers[0].value[1]}</p>
+                                    </div>
+                                    <div className="flex flex-nowrap gap-1">
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <p>2</p>
+                            <div className="flex-1 flex justify-between gap-4 items-end">
+                                <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[1].isShown && activeQuestion?.answers[1].answer}</p>
+                                <div>
+                                    <div className="flex flex-nowrap gap-1 h-10">
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[1].isShown && activeQuestion?.answers[1].value[0]}</p>
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[1].isShown && activeQuestion?.answers[1].value[1]}</p>
+                                    </div>
+                                    <div className="flex flex-nowrap gap-1">
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <p>3</p>
+                            <div className="flex-1 flex justify-between gap-4 items-end">
+                                <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[2].isShown && activeQuestion?.answers[2].answer}</p>
+                                <div>
+                                    <div className="flex flex-nowrap gap-1 h-10">
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[2].isShown && activeQuestion?.answers[2].value[0]}</p>
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[2].isShown && activeQuestion?.answers[2].value[1]}</p>
+                                    </div>
+                                    <div className="flex flex-nowrap gap-1">
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <p>4</p>
+                            <div className="flex-1 flex justify-between gap-4 items-end">
+                                <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[3].isShown && activeQuestion?.answers[3].answer}</p>
+                                <div>
+                                    <div className="flex flex-nowrap gap-1 h-10">
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[3].isShown && activeQuestion?.answers[3].value[0]}</p>
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[3].isShown && activeQuestion?.answers[3].value[1]}</p>
+                                    </div>
+                                    <div className="flex flex-nowrap gap-1">
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <p>5</p>
+                            <div className="flex-1 flex justify-between gap-4 items-end">
+                                <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[4].isShown && activeQuestion?.answers[4].answer}</p>
+                                <div>
+                                    <div className="flex flex-nowrap gap-1 h-10">
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[4].isShown && activeQuestion?.answers[4].value[0]}</p>
+                                        <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[4].isShown && activeQuestion?.answers[4].value[1]}</p>
+                                    </div>
+                                    <div className="flex flex-nowrap gap-1">
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                        <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 justify-end">
+                            <p className="text-end">Suma:</p>
+                            <div>
+                                <div className="flex flex-nowrap gap-1">
+                                    <p className="w-3.75">{pool[0]}</p>
+                                    <p className="w-3.75">{pool[1]}</p>
+                                    <p className="w-3.75">{pool[2]}</p>
+                                </div>
+                                <div className="flex flex-nowrap gap-1">
+                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
 
-                {/* Answers */}
-                <div className="w-[70vw] flex flex-col flex-nowrap gap-4">
-
-                    <div className="flex gap-4">
-                        <p>1</p>
-                        <div className="flex-1 flex justify-between gap-4 items-end">
-                            <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[0].isShown && activeQuestion?.answers[0].answer}</p>
-                            <div>
-                                <div className="flex flex-nowrap gap-1 h-10">
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[0].isShown && activeQuestion?.answers[0].value[0]}</p>
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[0].isShown && activeQuestion?.answers[0].value[1]}</p>
-                                </div>
-                                <div className="flex flex-nowrap gap-1">
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                </div>
-                            </div>
-                        </div>
+                {answeringTeam === 1 &&
+                    <div className="flex-1/4 flex flex-col items-center">
+                        <p className="text-[10rem] h-48">{mistakes > 0 && "X"}</p>
+                        <p className="text-[10rem] h-48">{mistakes > 1 && "X"}</p>
+                        <p className="text-[10rem] h-48">{mistakes > 2 && "X"}</p>
                     </div>
+                }
 
-                    <div className="flex gap-4">
-                        <p>2</p>
-                        <div className="flex-1 flex justify-between gap-4 items-end">
-                            <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[1].isShown && activeQuestion?.answers[1].answer}</p>
-                            <div>
-                                <div className="flex flex-nowrap gap-1 h-10">
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[1].isShown && activeQuestion?.answers[1].value[0]}</p>
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[1].isShown && activeQuestion?.answers[1].value[1]}</p>
-                                </div>
-                                <div className="flex flex-nowrap gap-1">
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                </div>
-                            </div>
-                        </div>
+                {answeringTeam === 0 &&
+                    <div className="flex-1/4 flex flex-col items-center">
+                        <p className="text-[15rem] h-[72]">{mistakes > 3 && "X"}</p>
                     </div>
+                }
 
-                    <div className="flex gap-4">
-                        <p>3</p>
-                        <div className="flex-1 flex justify-between gap-4 items-end">
-                            <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[2].isShown && activeQuestion?.answers[2].answer}</p>
-                            <div>
-                                <div className="flex flex-nowrap gap-1 h-10">
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[2].isShown && activeQuestion?.answers[2].value[0]}</p>
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[2].isShown && activeQuestion?.answers[2].value[1]}</p>
-                                </div>
-                                <div className="flex flex-nowrap gap-1">
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                        <p>4</p>
-                        <div className="flex-1 flex justify-between gap-4 items-end">
-                            <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[3].isShown && activeQuestion?.answers[3].answer}</p>
-                            <div>
-                                <div className="flex flex-nowrap gap-1 h-10">
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[3].isShown && activeQuestion?.answers[3].value[0]}</p>
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[3].isShown && activeQuestion?.answers[3].value[1]}</p>
-                                </div>
-                                <div className="flex flex-nowrap gap-1">
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                        <p>5</p>
-                        <div className="flex-1 flex justify-between gap-4 items-end">
-                            <p className="border-dotted border-b-4 border-b-yellow-300 flex-1">{activeQuestion != -1 && activeQuestion?.answers[4].isShown && activeQuestion?.answers[4].answer}</p>
-                            <div>
-                                <div className="flex flex-nowrap gap-1 h-10">
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[4].isShown && activeQuestion?.answers[4].value[0]}</p>
-                                    <p className="w-3.75">{activeQuestion != -1 && activeQuestion?.answers[4].isShown && activeQuestion?.answers[4].value[1]}</p>
-                                </div>
-                                <div className="flex flex-nowrap gap-1">
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                    <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2 justify-end">
-                        <p className="text-end">Suma:</p>
-                        <div>
-                            <div className="flex flex-nowrap gap-1">
-                                <p className="w-3.75">{pool[0]}</p>
-                                <p className="w-3.75">{pool[1]}</p>
-                                <p className="w-3.75">{pool[2]}</p>
-                            </div>
-                            <div className="flex flex-nowrap gap-1">
-                                <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                <div className="w-3.75 h-1 bg-yellow-300"></div>
-                                <div className="w-3.75 h-1 bg-yellow-300"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
             </div>
+
         </div>
     )
 }
