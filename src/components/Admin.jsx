@@ -23,14 +23,23 @@ const Admin = () => {
     const teamOneName = useRef("");
     const teamTwoName = useRef("");
 
+    const teamOnePoints = useRef("");
+    const teamTwoPoints = useRef("");
+
     const [isAnyQuestionShown, setIsAnyQuestionShown] = useState(false);
 
     const [answeringTeam, setAnsweringTeam] = useState(-1);
     const [mistakes, setMistakes] = useState(0);
 
     const teamRefs = {
-        team1: teamOneName,
-        team2: teamTwoName,
+        team1: {
+            name: teamOneName,
+            points: teamOnePoints
+        },
+        team2: {
+            name: teamTwoName,
+            points: teamTwoPoints
+        },
     }
 
     const [questions, setQuestions] = useState(null);
@@ -48,10 +57,12 @@ const Admin = () => {
     const formValue4 = useRef("");
     const formValue5 = useRef("");
 
+    const [pool, setPool] = useState(0);
+
 
     // Update given team name in database.
     const updateTeamName = async (team) => {
-        const ref = teamRefs[team];
+        const ref = teamRefs[team].name;
 
         if (!ref?.current) {
             console.error(`Invalid team ref: ${team}`);
@@ -71,9 +82,36 @@ const Admin = () => {
                 { name: name }
             );
 
-            console.log(`Updated ${team}: ${name}`);
+            console.log(`Updated ${team} name: ${name}`);
         } catch (err) {
             console.error("Failed to update team name:", err.message);
+        }
+    }
+
+    const updateTeamPoints = async (team) => {
+        const ref = teamRefs[team].points;
+
+        if (!ref?.current) {
+            console.error(`Invalid team ref: ${team}`);
+            return;
+        }
+
+        const points = ref.current.value.trim();
+
+        if (!points) {
+            console.error("Team points input is empty");
+            return;
+        }
+
+        try {
+            await updateDoc(
+                doc(db, "teams", team),
+                { points: points }
+            );
+
+            console.log(`Updated ${team} points: ${points}`);
+        } catch (err) {
+            console.error("Failed to update team points:", err.message);
         }
     }
 
@@ -99,7 +137,10 @@ const Admin = () => {
 
                 await updateDoc(
                     doc(db, "game_data", "game_data"),
-                    { activeQuestion: id }
+                    {
+                        activeQuestion: id,
+                        pool: 0
+                    }
                 );
 
                 if (activeQuestion != -1) {
@@ -152,6 +193,7 @@ const Admin = () => {
                     );
                 }
 
+                setPool(0);
                 setIsAnyQuestionShown(true);
             }
             else {
@@ -160,7 +202,8 @@ const Admin = () => {
                     {
                         activeQuestion: -1,
                         answeringTeam: -1,
-                        mistakes: 0
+                        mistakes: 0,
+                        pool: 0
                     }
                 );
 
@@ -193,6 +236,7 @@ const Admin = () => {
 
                 setAnsweringTeam(-1);
                 setMistakes(0);
+                setPool(0);
                 setIsAnyQuestionShown(false);
             }
 
@@ -205,7 +249,7 @@ const Admin = () => {
     }
 
     // Toggle answer isShown boolean in database.
-    const toggleAnswer = async (questionId, answerId) => {
+    const toggleAnswer = async (questionId, answerId, value) => {
         //console.log(questionId, answerId);
         try {
             const ref = doc(db, "questions", questionId);
@@ -217,6 +261,18 @@ const Admin = () => {
                 { [`answers.${answerId}.isShown`]: !current }
             );
 
+            const intValue = parseInt(value);
+
+            await updateDoc(
+                doc(db, "game_data", "game_data"),
+                { pool: increment(!current ? intValue : -intValue) }
+            )
+
+            setPool(prev => !current ? prev + intValue : prev - intValue)
+
+            questions.map(question => {
+                if (question.id == questionId) console.log(question);
+            })
 
             setQuestions(prev =>
                 prev.map(question => {
@@ -298,6 +354,7 @@ const Admin = () => {
         }
     }
 
+
     const increaseMistakes = async () => {
         await updateDoc(
             doc(db, "game_data", "game_data"),
@@ -305,6 +362,77 @@ const Admin = () => {
         )
         setMistakes(prev => prev + 1);
     }
+
+
+    const transferPoints = async (team) => {
+        if (team == 1) {
+            await updateDoc(
+                doc(db, "teams", "team1"),
+                { points: increment(pool) }
+            )
+        }
+        else if (team == 2) {
+            await updateDoc(
+                doc(db, "teams", "team2"),
+                { points: increment(pool) }
+            )
+        }
+        else console.error("Invalid team provided.");
+
+        const gameDataSnap = await getDoc(doc(db, "game_data", "game_data"));
+        const activeQuestion = gameDataSnap.data().activeQuestion;
+
+        await updateDoc(
+            doc(db, "questions", activeQuestion),
+            {
+                "answers.0.isShown": false,
+                "answers.1.isShown": false,
+                "answers.2.isShown": false,
+                "answers.3.isShown": false,
+                "answers.4.isShown": false
+            }
+        )
+
+        await updateDoc(
+            doc(db, "game_data", "game_data"),
+            {
+                activeQuestion: -1,
+                answeringTeam: -1,
+                mistakes: 0,
+                pool: 0
+            }
+        )
+
+        if (team == 1) {
+            teamOnePoints.current.value = parseInt(teamOnePoints.current.value) + parseInt(pool);
+        }
+        else if (team == 2) {
+            teamTwoPoints.current.value = parseInt(teamTwoPoints.current.value) + parseInt(pool);
+        }
+
+        setQuestions(prev =>
+            prev.map(question => {
+
+                question.isActive = false;
+
+                const newAnswers = Object.fromEntries(
+                    Object.entries(question.answers).map(([id, answer]) => [
+                        id,
+                        { ...answer, isShown: false }
+                    ])
+                )
+
+                return { ...question, answers: newAnswers };
+            })
+        )
+
+        setAnsweringTeam(-1);
+        setMistakes(0);
+        setPool(0);
+        setIsAnyQuestionShown(false);
+
+    }
+
 
     const createQuestion = async () => {
 
@@ -399,11 +527,12 @@ const Admin = () => {
             const gameDataSnap = await getDoc(doc(db, "game_data", "game_data"));
             const gameData = gameDataSnap.data();
 
+            setPool(gameData.pool);
             setAnsweringTeam(gameData.answeringTeam);
             setMistakes(gameData.mistakes);
             if (gameData.activeQuestion != -1) setIsAnyQuestionShown(true)
 
-            return gameData
+            return gameData;
         }
 
         const fetchTeams = async () => {
@@ -422,8 +551,9 @@ const Admin = () => {
                     })
                 );
 
-                results.forEach(({ teamId, name }) => {
-                    teamRefs[teamId].current.value = name;
+                results.forEach(({ teamId, name, points }) => {
+                    teamRefs[teamId].name.current.value = name;
+                    teamRefs[teamId].points.current.value = points;
                 });
 
                 console.log("fetched teams.");
@@ -571,14 +701,18 @@ const Admin = () => {
     return (
         <div className="w-screen min-h-screen flex flex-col">
 
-            {/* Teams */}
+            {/* Teams and pool */}
             <div className="w-screen flex justify-between p-5">
 
                 {/* team 1 */}
                 <div className="flex flex-nowrap flex-col gap-2">
                     <div className="flex gap-2 flex-nowrap h-fit">
-                        <input ref={teamOneName} defaultValue="Loading..." placeholder="Nazwa drużyny 1" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
+                        <input type="text" ref={teamOneName} defaultValue="Loading..." placeholder="Nazwa drużyny 1" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
                         <button onClick={() => { updateTeamName("team1") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
+                    </div>
+                    <div className="flex gap-2 flex-nowrap h-fit">
+                        <input type="number" ref={teamOnePoints} defaultValue="Loading..." placeholder="Punkty drużyny 1" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
+                        <button onClick={() => { updateTeamPoints("team1") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
                     </div>
 
                     {answeringTeam != 1 && isAnyQuestionShown &&
@@ -588,7 +722,7 @@ const Admin = () => {
                     {answeringTeam === 0 &&
                         <div className="w-full flex">
                             <button disabled={mistakes != 0} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(0)} `}>X</button>
-                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(1)}`}>X</button>
+                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(1)} `}>X</button>
                             <button disabled={mistakes != 2} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(2)} `}>X</button>
                         </div>
                     }
@@ -598,11 +732,30 @@ const Admin = () => {
                     }
                 </div>
 
+                {/* pool */}
+                {isAnyQuestionShown &&
+                    <div>
+                        <p className="text-center">Pula: {pool}</p>
+                        <div className="flex gap-2 flex-nowrap">
+                            {((answeringTeam === 0 && mistakes < 3) || (answeringTeam === 0 && mistakes >= 4) || (answeringTeam === 1 && mistakes === 3)) &&
+                                <button onClick={() => { transferPoints(1) }} className="bg-yellow-300 text-black px-2 cursor-pointer"><i className="bi bi-arrow-left-short text-2xl"></i> Przekaż punkty</button>
+                            }
+                            {((answeringTeam === 0 && mistakes === 3) || (answeringTeam === 1 && mistakes >= 4) || (answeringTeam === 1 && mistakes < 3)) &&
+                                <button onClick={() => { transferPoints(2) }} className="bg-yellow-300 text-black px-2 cursor-pointer">Przekaż punkty <i className="bi bi-arrow-right-short text-2xl"></i></button>
+                            }
+                        </div>
+                    </div>
+                }
+
                 {/* team 2 */}
                 <div className="flex flex-nowrap flex-col gap-2">
                     <div className="flex gap-2 flex-nowrap h-fit">
-                        <input ref={teamTwoName} defaultValue="Loading..." placeholder="Nazwa drużyny 2" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
+                        <input type="text" ref={teamTwoName} defaultValue="Loading..." placeholder="Nazwa drużyny 2" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
                         <button onClick={() => { updateTeamName("team2") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
+                    </div>
+                    <div className="flex gap-2 flex-nowrap h-fit">
+                        <input type="number" ref={teamTwoPoints} defaultValue="Loading..." placeholder="Punkty drużyny 2" className="outline-none border-dotted border-b-4 pt-2 border-b-yellow-300"></input>
+                        <button onClick={() => { updateTeamPoints("team2") }} className="bg-yellow-300 text-black px-2 rounded-lg cursor-pointer">Zapisz</button>
                     </div>
 
                     {answeringTeam != 0 && isAnyQuestionShown &&
@@ -657,7 +810,7 @@ const Admin = () => {
                                                         <div className="flex flex-nowrap gap-4">
                                                             <p>{answer.value}</p>
                                                             {question.isActive &&
-                                                                <button onClick={() => { toggleAnswer(question.id, id) }} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
+                                                                <button onClick={() => { toggleAnswer(question.id, id, answer.value) }} className={`border-solid border border-yellow-300 px-2 cursor-pointer ${answer.isShown ? "bg-transparent text-yellow-300" : "bg-yellow-300 text-black"}`}>{answer.isShown ? "Zakryj" : "Odkryj"}</button>
                                                             }
                                                         </div>
                                                     </div>
