@@ -613,7 +613,7 @@ const Admin = () => {
     const getMistakesStyleButton = (button) => {
         if (mistakes == 0) {
             if (button == 0) {
-                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+                return "text-red-400 bg-red-950/50 hover:bg-red-950 cursor-pointer";
             }
             else if (button == 1) {
                 return "border-gray-400 text-gray-400 bg-gray-900";
@@ -633,7 +633,7 @@ const Admin = () => {
                 return "text-red-950 bg-red-400";
             }
             else if (button == 1) {
-                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+                return "text-red-400 bg-red-950/50 hover:bg-red-950 cursor-pointer";
             }
             else if (button == 2) {
                 return "border-gray-400 text-gray-400 bg-gray-900";
@@ -653,7 +653,7 @@ const Admin = () => {
                 return "text-red-950 bg-red-400";
             }
             else if (button == 2) {
-                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+                return "text-red-400 bg-red-950/50 hover:bg-red-950 cursor-pointer";
             }
             else if (button == 3) {
                 return "border-gray-400 text-gray-400 bg-gray-900";
@@ -673,7 +673,7 @@ const Admin = () => {
                 return "text-red-950 bg-red-400";
             }
             else if (button == 3) {
-                return "text-red-400 bg-red-950/50 hover:bg-red-950";
+                return "text-red-400 bg-red-950/50 hover:bg-red-950 cursor-pointer";
             }
             else {
                 console.error("invalid button order number provided.")
@@ -721,9 +721,9 @@ const Admin = () => {
 
                     {answeringTeam === 0 &&
                         <div className="w-full flex">
-                            <button disabled={mistakes != 0} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(0)} `}>X</button>
-                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(1)} `}>X</button>
-                            <button disabled={mistakes != 2} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(2)} `}>X</button>
+                            <button disabled={mistakes != 0} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid font-extrabold ${getMistakesStyleButton(0)} `}>X</button>
+                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid font-extrabold ${getMistakesStyleButton(1)} `}>X</button>
+                            <button disabled={mistakes != 2} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid font-extrabold ${getMistakesStyleButton(2)} `}>X</button>
                         </div>
                     }
 
@@ -764,9 +764,9 @@ const Admin = () => {
 
                     {answeringTeam === 1 &&
                         <div className="w-full flex">
-                            <button disabled={mistakes != 0} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(0)} `}>X</button>
-                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(1)} `}>X</button>
-                            <button disabled={mistakes != 2} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid cursor-pointer font-extrabold ${getMistakesStyleButton(2)} `}>X</button>
+                            <button disabled={mistakes != 0} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid font-extrabold ${getMistakesStyleButton(0)} `}>X</button>
+                            <button disabled={mistakes != 1} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid font-extrabold ${getMistakesStyleButton(1)} `}>X</button>
+                            <button disabled={mistakes != 2} onClick={() => { increaseMistakes() }} className={`flex-1/3 border border-solid font-extrabold ${getMistakesStyleButton(2)} `}>X</button>
                         </div>
                     }
 
