@@ -155,8 +155,10 @@ const User = () => {
                 </div>
             </div>
 
+            {/* Question and mistakes */}
             <div className="flex-1 w-screen flex justify-between items-center">
 
+                {/* Team 1 mistakes */}
                 {answeringTeam === 0 &&
                     <div className="flex-1/4 flex flex-col items-center">
                         <p className="text-[10rem] h-48">{mistakes > 0 && "X"}</p>
@@ -171,8 +173,9 @@ const User = () => {
                     </div>
                 }
 
+
+                {/* Question */}
                 <div className="w-[70vw] flex-1 flex flex-col items-center justify-center gap-10">
-                    {/* Question */}
                     <div className="w-[70vw] h-25">
                         <p className="text-center text-4xl">{activeQuestion === null ? "Loading..." : activeQuestion?.question}</p>
                     </div>
@@ -284,6 +287,7 @@ const User = () => {
                     </div>
                 </div>
 
+                {/* Team 2 mistakes */}
                 {answeringTeam === 1 &&
                     <div className="flex-1/4 flex flex-col items-center">
                         <p className="text-[10rem] h-48">{mistakes > 0 && "X"}</p>
@@ -298,6 +302,12 @@ const User = () => {
                     </div>
                 }
 
+            </div>
+
+            <div className="w-screen h-12.5 flex justify-center items-center">
+                { mistakes >= 2 && mistakes <= 3 && (answeringTeam === 0 || answeringTeam === 1) &&
+                    <p>Drużyna {answeringTeam === 0 ? teamTwoName : teamOneName} ma prawo do narady!</p>
+                }
             </div>
 
         </div>
