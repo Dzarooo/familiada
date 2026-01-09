@@ -5,12 +5,6 @@ import { useState, useEffect } from "react";
 
 const User = () => {
 
-    const [teamOneName, setTeamOneName] = useState("loading...");
-    const [teamTwoName, setTeamTwoName] = useState("loading...");
-
-    const [teamOnePoints, setTeamOnePoints] = useState("Loading...");
-    const [teamTwoPoints, setTeamTwoPoints] = useState("Loading...");
-
     const firebaseConfig = {
         apiKey: "AIzaSyD2Uzvs9YLTGePSJnqqM1kkf6qhlv4aIvU",
         authDomain: "familiada-dzarooo.firebaseapp.com",
@@ -25,6 +19,14 @@ const User = () => {
     const auth = getAuth(app);
 
     const db = getFirestore(app);
+
+    const [teamOneName, setTeamOneName] = useState("loading...");
+    const [teamTwoName, setTeamTwoName] = useState("loading...");
+
+    const [teamOnePoints, setTeamOnePoints] = useState("Loading...");
+    const [teamTwoPoints, setTeamTwoPoints] = useState("Loading...");
+
+    const [pool, setPool] = useState("00");
 
     useEffect(() => {
 
@@ -57,9 +59,21 @@ const User = () => {
                 setTeamTwoPoints(data.points);
             });
 
+            const unsubGameData = onSnapshot(doc(db, "game_data", "game_data"), (snap) => {
+                if (!snap.exists()) return;
+
+                const data = snap.data();
+                console.log("game data:", data);
+
+                let pool = parseInt(data.pool);
+                pool = pool < 10 ? "0" + pool : "" + pool;
+                setPool("" + pool);
+            })
+
             return () => {
                 unsubTeam1();
                 unsubTeam2();
+                unsubGameData();
             };
         });
 
@@ -179,8 +193,8 @@ const User = () => {
                         <p className="text-end">Suma:</p>
                         <div>
                             <div className="flex flex-nowrap gap-1">
-                                <p className="w-3.75">0</p>
-                                <p className="w-3.75">0</p>
+                                <p className="w-3.75">{ pool[0] }</p>
+                                <p className="w-3.75">{ pool[1] }</p>
                             </div>
                             <div className="flex flex-nowrap gap-1">
                                 <div className="w-3.75 h-1 bg-yellow-300"></div>
