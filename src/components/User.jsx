@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, onSnapshot, getDoc } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const User = () => {
 
@@ -20,20 +20,33 @@ const User = () => {
 
     const db = getFirestore(app);
 
+    const soundCorrect = new Audio("/familiada/familiada-correct.mp3");
+    const soundIncorrect = new Audio("/familiada/familiada-incorrect.mp3");
+
     const [teamOneName, setTeamOneName] = useState("loading...");
     const [teamTwoName, setTeamTwoName] = useState("loading...");
 
     const [teamOnePoints, setTeamOnePoints] = useState("Loading...");
     const [teamTwoPoints, setTeamTwoPoints] = useState("Loading...");
 
-    const [pool, setPool] = useState("000");
+    const [pool, setPool] = useState("");
 
     const [activeQuestion, setActiveQuestion] = useState(null);
 
     const [answeringTeam, setAnsweringTeam] = useState(-1);
 
-    const [mistakes, setMistakes] = useState(0);
+    const [mistakes, setMistakes] = useState(-1);
 
+
+    const playCorrectSound = () => {
+        soundCorrect.currentTime = 0;
+        soundCorrect.play();
+    }
+
+    const playIncorrectSound = () => {
+        soundIncorrect.currentTime = 0;
+        soundIncorrect.play();
+    }
 
     useEffect(() => {
 
@@ -81,18 +94,26 @@ const User = () => {
                 else if (length == 2) pool = "0" + pool;
                 else pool = "" + pool;
 
-                setPool(pool);
-                setAnsweringTeam(data.answeringTeam);
-                setMistakes(data.mistakes);
+                setPool(prev => {
+                    if(prev != "" && prev < pool) playCorrectSound();
+                    return pool;
+                });
 
+                setAnsweringTeam(data.answeringTeam);
+
+                setMistakes(prev => {
+                    if (prev != -1 && prev < data.mistakes) playIncorrectSound();
+                    return data.mistakes;
+                });
 
                 if (data.activeQuestion == -1) {
                     setActiveQuestion(-1);
 
                     unsubQuestion();
-
                 }
                 else {
+
+                    unsubQuestion();
 
                     unsubQuestion = onSnapshot(doc(db, "questions", data.activeQuestion), snap => {
                         if (!snap.exists()) return;
@@ -121,6 +142,7 @@ const User = () => {
                     })
 
                 }
+
             })
 
             return () => {
@@ -305,7 +327,7 @@ const User = () => {
             </div>
 
             <div className="w-screen h-12.5 flex justify-center items-center">
-                { mistakes >= 2 && mistakes <= 3 && (answeringTeam === 0 || answeringTeam === 1) &&
+                {mistakes >= 2 && mistakes <= 3 && (answeringTeam === 0 || answeringTeam === 1) &&
                     <p>Drużyna {answeringTeam === 0 ? teamTwoName : teamOneName} ma prawo do narady!</p>
                 }
             </div>
