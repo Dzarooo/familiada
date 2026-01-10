@@ -191,7 +191,7 @@ const User = () => {
 
                 {answeringTeam === 1 &&
                     <div className="flex-1/4 flex flex-col items-center">
-                        <p className="text-[15rem] h-[72]">{mistakes > 3 && "X"}</p>
+                        <p className="text-[15rem] h-72">{mistakes > 3 && "X"}</p>
                     </div>
                 }
 
@@ -320,7 +320,7 @@ const User = () => {
 
                 {answeringTeam === 0 &&
                     <div className="flex-1/4 flex flex-col items-center">
-                        <p className="text-[15rem] h-[72]">{mistakes > 3 && "X"}</p>
+                        <p className="text-[15rem] h-72">{mistakes > 3 && "X"}</p>
                     </div>
                 }
 
