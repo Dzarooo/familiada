@@ -16,9 +16,9 @@ function App() {
           <img src={viteLogo} className="vite" alt="Vite logo" />
         </div>
         <div>
-          <h1>Familiada will be there someday</h1>
+          <h1>Better familiada will be there someday</h1>
           <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+            Until then use my old, working version: <a href="https://dzarooo.github.io/familiada-old/#/admin" target="_blank">this</a> as an admin view and <a href="https://dzarooo.github.io/familiada-old/#" target="_blank">this</a> as a public view.
           </p>
         </div>
         <button
